@@ -63,13 +63,16 @@ android.minapi = 24
 #android.sdk = 24
 
 # (str) Android NDK version to use
-android.ndk = 27b
+android.ndk = 28c
 
 # (bool) Use --private-data-storage for Android 11+
 android.private_storage = True
 
 # (bool) Enable AndroidX support
 android.enable_androidx = True
+
+# (bool) Accept Android SDK licenses automatically
+android.accept_sdk_license = True
 
 # (list) Android archs to build for
 android.archs = arm64-v8a
