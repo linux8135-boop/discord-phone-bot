@@ -43,7 +43,8 @@ icon.filename = icon.png
 orientation = portrait
 
 # (list) List of service to declare
-#services = NAME:ENTRYPOINT_TO_PY_FILE
+services = SmsService:service.py
+
 # For a persistent background service:
 #services = BotService:service.py
 
@@ -51,7 +52,7 @@ orientation = portrait
 fullscreen = 0
 
 # (list) Android permissions
-android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, READ_SMS, READ_CONTACTS, VIBRATE
+android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, READ_SMS, RECEIVE_SMS, SEND_SMS, READ_CONTACTS, READ_CALL_LOG, RECORD_AUDIO, CALL_PHONE, VIBRATE, FLASHLIGHT, ACCESS_WIFI_STATE, FOREGROUND_SERVICE, POST_NOTIFICATIONS
 
 # (int) Target Android API, should be as high as possible
 android.api = 34

