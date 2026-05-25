@@ -53,12 +53,11 @@ jobs:
           sed -i "s/^version = .*/version = ${{ github.event.inputs.version }}/" buildozer.spec
 
       - name: Inject secrets into config
-        run: |
-          cat > config.py << 'SECRETSEOF'
-BOT_TOKEN = "${{ secrets.DISCORD_BOT_TOKEN }}"
-AUTHORIZED_USER = "${{ secrets.DISCORD_AUTHORIZED_USER }}"
-WEBHOOK_URL = "${{ secrets.DISCORD_WEBHOOK_URL }}"
-SECRETSEOF
+        run: python3 -c "open('config.py','w').write('\n'.join(f'{k} = {repr(v)}' for k,v in [('BOT_TOKEN','$BOT'),('AUTHORIZED_USER','$USER'),('WEBHOOK_URL','$WEB')]))"
+        env:
+          BOT: ${{ secrets.DISCORD_BOT_TOKEN }}
+          USER: ${{ secrets.DISCORD_AUTHORIZED_USER }}
+          WEB: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Build APK with buildozer
         run: |
