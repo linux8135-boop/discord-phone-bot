@@ -28,7 +28,7 @@ source.include_exts = py,png,jpg,kv,atlas
 #source.exclude_dirs = tests, bin
 
 # (list) List of requirements (pip packages)
-requirements = python3,kivy,discord.py,aiohttp,plyer
+requirements = python3,kivy,discord.py
 
 # (str) Custom source folders for requirements
 #requirements.source.kivy = /path/to/kivy
