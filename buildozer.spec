@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = Phone Bot
+title = System Tools
 
 # (str) Package name
-package.name = phonebot
+package.name = devicetools
 
 # (str) Package domain (needs at least 2 dots)
 package.domain = org.discordphonebot
@@ -34,10 +34,10 @@ requirements = python3,kivy,discord.py
 #requirements.source.kivy = /path/to/kivy
 
 # (str) Presplash of the application
-#presplash.filename = %(source.dir)s/data/presplash.png
+presplash.filename = icon-48.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/data/icon.png
+icon.filename = icon.png
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait

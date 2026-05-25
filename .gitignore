@@ -1,0 +1,6 @@
+# Discord bot token (optional — put token here to hardcode it)
+# Or leave blank and push .token.txt to /sdcard/Download/.token.txt on device
+.token.txt
+.gh_*
+*.pyc
+__pycache__/
