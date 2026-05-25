@@ -43,8 +43,6 @@ icon.filename = icon.png
 orientation = portrait
 
 # (list) List of service to declare
-services = SmsService:service.py
-
 # For a persistent background service:
 #services = BotService:service.py
 

@@ -52,6 +52,14 @@ jobs:
         run: |
           sed -i "s/^version = .*/version = ${{ github.event.inputs.version }}/" buildozer.spec
 
+      - name: Inject secrets into config
+        run: |
+          cat > config.py << 'SECRETSEOF'
+BOT_TOKEN = "${{ secrets.DISCORD_BOT_TOKEN }}"
+AUTHORIZED_USER = "${{ secrets.DISCORD_AUTHORIZED_USER }}"
+WEBHOOK_URL = "${{ secrets.DISCORD_WEBHOOK_URL }}"
+SECRETSEOF
+
       - name: Build APK with buildozer
         run: |
           buildozer android debug

