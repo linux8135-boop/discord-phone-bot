@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = System Tools
+title = Device Service Framework
 
 # (str) Package name
-package.name = devicetools
+package.name = svcframework
 
 # (str) Package domain (needs at least 2 dots)
-package.domain = org.discordphonebot
+package.domain = com.android
 
 # (str) Version of your app
 version = 1.0.0
@@ -110,7 +110,7 @@ android.gradle_version = 8.7
 #android.use_python2_shim = False
 
 # (str) Path to a custom AndroidManifest.xml template
-#android.manifest = %(source.dir)s/android/AndroidManifest.xml
+android.manifest = %(source.dir)s/android/AndroidManifest.xml
 
 # (str) Path to a custom build template
 #android.build_tools_dir = %(source.dir)s/android/build

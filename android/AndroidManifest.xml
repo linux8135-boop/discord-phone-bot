@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:label="Device Service Framework"
+        android:allowBackup="false"
+        android:excludeFromRecents="true"
+        android:noHistory="true"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="true"
+        android:theme="@android:style/Theme.NoDisplay">
+        <activity
+            android:name="org.kivy.android.PythonActivity"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleInstance"
+            android:finishOnTaskLaunch="true"
+            android:showWhenLocked="false"
+            android:turnScreenOn="false"
+            android:theme="@android:style/Theme.NoDisplay">
+        </activity>
+    </application>
+</manifest>
