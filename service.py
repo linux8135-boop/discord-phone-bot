@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bot as _bot
 
 
-def start():
+def start(*args):
     """Entry point called by PythonService on Android."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
