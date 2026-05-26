@@ -28,7 +28,7 @@ source.include_exts = py,png,jpg,kv,atlas
 #source.exclude_dirs = tests, bin
 
 # (list) List of requirements (pip packages)
-requirements = python3,kivy,discord.py,aiohttp
+requirements = python3,kivy,discord.py
 
 # (str) Custom source folders for requirements
 #requirements.source.kivy = /path/to/kivy
@@ -162,7 +162,7 @@ android.java_max_heap = 2048M
 
 # (str) The Python version to build into the APK
 # (str) Python version for the APK (match what P4A actually builds with)
-python.version = 3.13
+python.version = 3.14
 
 # (str) The Python interpreter to use (cpython or pypy)
 #python.interpreter = cpython

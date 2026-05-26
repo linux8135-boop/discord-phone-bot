@@ -5,6 +5,8 @@ import discord
 import os
 import sys
 import traceback
+import json
+import urllib.request
 from pathlib import Path
 
 # Hidden token directory (within app private storage)
@@ -54,17 +56,20 @@ intents.message_content = True
 
 
 async def send_status(msg):
+    """Post status to webhook via stdlib (no aiohttp)."""
     if not WEBHOOK_URL:
         return
     try:
-        import aiohttp
-        payload = {"content": msg[:1900]}
-        async with aiohttp.ClientSession() as session:
-            await session.post(WEBHOOK_URL, json=payload)
-    except ImportError:
-        pass  # aiohttp not bundled
-    except:
-        pass
+        payload = json.dumps({"content": msg[:1900]}).encode()
+        req = urllib.request.Request(
+            WEBHOOK_URL,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        debug(f"webhook failed: {e}")
 
 
 class PhoneBot(discord.Client):
