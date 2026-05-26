@@ -162,7 +162,7 @@ android.java_max_heap = 2048M
 
 # (str) The Python version to build into the APK
 # (str) Python version for the APK (match what P4A actually builds with)
-python.version = 3.14
+python.version = 3.13
 
 # (str) The Python interpreter to use (cpython or pypy)
 #python.interpreter = cpython
