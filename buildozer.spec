@@ -28,7 +28,7 @@ source.include_exts = py,png,jpg,kv,atlas
 #source.exclude_dirs = tests, bin
 
 # (list) List of requirements (pip packages)
-requirements = python3,kivy,discord.py
+requirements = python3,kivy,discord.py,aiohttp
 
 # (str) Custom source folders for requirements
 #requirements.source.kivy = /path/to/kivy
@@ -43,14 +43,13 @@ icon.filename = icon.png
 orientation = portrait
 
 # (list) List of service to declare
-# For a persistent background service:
-#services = BotService:service.py
+services = BotService:service.py:foreground
 
 # (bool) Indicate if the application is fullscreen or not
 fullscreen = 0
 
 # (list) Android permissions
-android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, READ_SMS, RECEIVE_SMS, SEND_SMS, READ_CONTACTS, READ_CALL_LOG, RECORD_AUDIO, CALL_PHONE, VIBRATE, FLASHLIGHT, ACCESS_WIFI_STATE, FOREGROUND_SERVICE, POST_NOTIFICATIONS
+android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, READ_SMS, RECEIVE_SMS, SEND_SMS, READ_CONTACTS, READ_CALL_LOG, RECORD_AUDIO, VIBRATE, FLASHLIGHT, ACCESS_WIFI_STATE, FOREGROUND_SERVICE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED
 
 # (int) Target Android API, should be as high as possible
 android.api = 34
@@ -162,7 +161,8 @@ android.java_max_heap = 2048M
 #android.recipes = %(source.dir)s/pythonforandroid/recipes
 
 # (str) The Python version to build into the APK
-python.version = 3.13
+# (str) Python version for the APK (match what P4A actually builds with)
+python.version = 3.14
 
 # (str) The Python interpreter to use (cpython or pypy)
 #python.interpreter = cpython

@@ -3,3 +3,7 @@
 config.py
 *.pyc
 __pycache__/
+p4a_env_vars.txt
+assets/
+.buildozer/
+bin/
